@@ -1,0 +1,25 @@
+TireCheck Fleet – Licenza d’Uso
+
+Copyright (c) 2026 Alessandro Pezzali – pezzaliAPP
+
+È concessa all’utente una licenza gratuita, non esclusiva e non trasferibile
+per l’utilizzo dell’applicazione TireCheck Fleet.
+
+È severamente vietato:
+– copiare, riprodurre o distribuire il codice sorgente
+– modificare, decompilare o creare opere derivate
+– rivendere o redistribuire l’app senza autorizzazione scritta
+
+Qualsiasi utilizzo del codice, anche parziale, deve essere preventivamente
+autorizzato per iscritto dall’autore.
+
+Nel caso venga concessa autorizzazione:
+– deve essere sempre mantenuta la paternità dell’opera
+– deve essere citato: Alessandro Pezzali – pezzaliAPP
+
+L’app viene fornita “così com’è”, senza garanzie di alcun tipo.
+
+Per richieste di utilizzo o licenze:
+https://www.pezzaliapp.com/
+
+Tutti i diritti riservati.

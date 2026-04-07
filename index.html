@@ -1,0 +1,2609 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#e8ff47">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TireCheck Fleet">
+  <title>TireCheck Fleet · PezzaliApp</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* ── DESIGN SYSTEM ─────────────────────────────────── */
+    :root {
+      --bg:        #0d0d0d;
+      --bg2:       #141414;
+      --card:      #1a1a1a;
+      --card2:     #222222;
+      --border:    #2a2a2a;
+      --border2:   #333333;
+      --accent:    #e8ff47;
+      --accent2:   #c8df27;
+      --danger:    #ff4757;
+      --warn:      #ffa502;
+      --ok:        #2ed573;
+      --text:      #f0f0f0;
+      --text2:     #888888;
+      --text3:     #555555;
+      --font-ui:   'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --r:         12px;
+      --r-sm:      8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.6);
+      --shadow-accent: 0 0 32px rgba(232,255,71,.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── HEADER ────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-logo { width: 32px; height: 32px; flex-shrink: 0; }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.3px;
+      line-height: 1.1;
+    }
+    .header-title span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .btn-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--r-sm);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .btn-icon:active { background: var(--card2); transform: scale(.93); }
+
+    /* ── SCREENS ───────────────────────────────────────── */
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    .screen.active { display: flex; }
+
+    /* ── BOTTOM NAV ────────────────────────────────────── */
+    nav {
+      display: flex;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 4px;
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      transition: color .15s;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .nav-btn .ico { font-size: 20px; }
+    .nav-btn.active { color: var(--accent); }
+    .nav-btn:active { opacity: .7; }
+
+    /* ── BUTTONS ───────────────────────────────────────── */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-radius: var(--r);
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      border: none;
+      width: 100%;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary { background: var(--accent); color: #0d0d0d; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--border2); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-sm { padding: 9px 14px; font-size: 13px; border-radius: var(--r-sm); width: auto; }
+
+    /* ── CARDS ─────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+    }
+
+    /* ── FORM ELEMENTS ─────────────────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    input, select, textarea {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      color: var(--text);
+      width: 100%;
+      outline: none;
+      transition: border-color .15s;
+      appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    input[type="password"] { letter-spacing: .1em; }
+    textarea { resize: none; }
+    select option { background: var(--card); }
+
+    /* ── BADGES ESITO ──────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .badge-ok     { background: rgba(46,213,115,.15); color: var(--ok);     border: 1px solid rgba(46,213,115,.3); }
+    .badge-warn   { background: rgba(255,165,2,.15);  color: var(--warn);   border: 1px solid rgba(255,165,2,.3); }
+    .badge-danger { background: rgba(255,71,87,.15);  color: var(--danger); border: 1px solid rgba(255,71,87,.3); }
+
+    /* ── SCREEN: HOME ──────────────────────────────────── */
+    #screen-home { padding: 0; }
+
+    /* ── SCREEN: SCANSIONE ────────────────────────────── */
+    #screen-scan { padding: 0; }
+
+    .camera-zone {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #000;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    #preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .camera-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text3);
+    }
+    .camera-placeholder .cam-ico { font-size: 56px; opacity: .35; }
+    .camera-placeholder p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .5;
+    }
+
+    .camera-overlay { position: absolute; inset: 0; pointer-events: none; }
+    .camera-overlay::before, .camera-overlay::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-color: var(--accent);
+      border-style: solid;
+      opacity: .8;
+    }
+    .camera-overlay::before { top: 16px; left: 16px; border-width: 3px 0 0 3px; }
+    .camera-overlay::after  { bottom: 16px; right: 16px; border-width: 0 3px 3px 0; }
+
+    .scan-actions {
+      padding: 16px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-camera {
+      flex: 1;
+      background: var(--accent);
+      color: #0d0d0d;
+      border: none;
+      border-radius: var(--r);
+      padding: 14px;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .15s;
+    }
+    .btn-camera:active { transform: scale(.97); background: var(--accent2); }
+
+    #file-input { display: none; }
+
+    .scan-form {
+      padding: 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ── DUAL PHOTO ZONE ───────────────────────────────── */
+    .photo-slots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    .photo-slot {
+      position: relative;
+      aspect-ratio: 4/3;
+      background: #000;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .photo-slot:first-child {
+      border-right: 1px solid var(--bg);
+    }
+
+    .photo-slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+    .photo-slot img.loaded { display: block; }
+
+    .slot-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text3);
+    }
+    .slot-placeholder .slot-ico { font-size: 32px; opacity: .4; }
+    .slot-placeholder .slot-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      opacity: .6;
+      text-align: center;
+      padding: 0 8px;
+      line-height: 1.5;
+    }
+
+    /* overlay corner brackets per ogni slot */
+    .slot-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .slot-overlay::before, .slot-overlay::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: var(--accent);
+      border-style: solid;
+      opacity: .7;
+    }
+    .slot-overlay::before { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .slot-overlay::after  { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    /* badge stato slot */
+    .slot-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(13,13,13,.85);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-family: var(--font-mono);
+      font-size: 8px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+    .slot-badge.ok     { border-color: rgba(46,213,115,.4); color: var(--ok); }
+    .slot-badge.active { border-color: rgba(232,255,71,.4); color: var(--accent); }
+
+    /* pulsanti scatta sotto i due slot */
+    .dual-scan-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      flex-shrink: 0;
+    }
+    .dual-scan-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 8px;
+      font-family: var(--font-ui);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+    .dual-scan-btn:active { opacity: .8; transform: scale(.98); }
+    .dual-scan-btn.battistrada {
+      background: var(--accent);
+      color: #0d0d0d;
+      border-right: 1px solid rgba(0,0,0,.2);
+    }
+    .dual-scan-btn.fianco {
+      background: var(--card2);
+      color: var(--text);
+      border-top: 1px solid var(--border);
+    }
+    .dual-scan-btn.fianco.has-photo {
+      background: rgba(46,213,115,.12);
+      color: var(--ok);
+      border-color: rgba(46,213,115,.3);
+    }
+
+    /* ── OCR STATUS BANNER ─────────────────────────────── */
+    .ocr-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(232,255,71,.06);
+      border: 1px solid rgba(232,255,71,.2);
+      border-radius: var(--r-sm);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: .06em;
+    }
+    .ocr-banner.visible { display: flex; }
+    .ocr-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(232,255,71,.3);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── SCREEN: ANALISI ──────────────────────────────── */
+    #screen-analysis { padding: 20px; gap: 16px; }
+
+    .analysis-header { text-align: center; }
+    .analysis-header h2 { font-size: 20px; font-weight: 700; }
+    .analysis-header p { font-family: var(--font-mono); font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+    .result-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      display: none;
+    }
+
+    .ai-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .ai-status-text { font-size: 14px; color: var(--text2); }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text2);
+    }
+
+    .metric-value { font-size: 22px; font-weight: 700; line-height: 1.1; }
+    .metric-value.ok     { color: var(--ok); }
+    .metric-value.warn   { color: var(--warn); }
+    .metric-value.danger { color: var(--danger); }
+    .metric-sub { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+
+    .ai-comment {
+      background: var(--card);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--r) var(--r) 0;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text2);
+    }
+
+    /* ── DOT + MISURA BADGE nella schermata analisi ───── */
+    .tire-specs-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      display: flex;
+      gap: 14px;
+    }
+    .tire-spec-item { flex: 1; }
+    .tire-spec-item .metric-label { margin-bottom: 4px; }
+    .tire-spec-value {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: .04em;
+    }
+    .tire-spec-value.unknown { color: var(--text3); font-style: italic; }
+
+    /* firma */
+    .signature-section { display: flex; flex-direction: column; gap: 10px; }
+    .signature-pad-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      background: #fff;
+    }
+    #signature-pad {
+      display: block;
+      width: 100%;
+      height: 120px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .signature-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #ccc;
+      letter-spacing: .06em;
+      transition: opacity .3s;
+    }
+    .signature-hint.hidden { opacity: 0; }
+    .sign-actions { display: flex; gap: 8px; }
+
+    .analysis-actions { display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+
+    /* ── SCREEN: STORICO ───────────────────────────────── */
+    #screen-history { padding: 20px; gap: 14px; }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .history-header h2 { font-size: 18px; font-weight: 700; }
+    .history-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text2);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .history-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .history-item:active { border-color: var(--accent); }
+    .history-thumb {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--r-sm);
+      object-fit: cover;
+      background: var(--bg2);
+      flex-shrink: 0;
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-plate { font-weight: 700; font-size: 15px; letter-spacing: .04em; }
+    .history-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text2); margin-top: 2px; }
+    .history-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text3);
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .history-empty .ico { font-size: 48px; opacity: .3; }
+    .history-empty p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    /* ── SCREEN: IMPOSTAZIONI ──────────────────────────── */
+    #screen-settings { padding: 20px; gap: 20px; }
+    .settings-title { font-size: 18px; font-weight: 700; }
+    .settings-section { display: flex; flex-direction: column; gap: 14px; }
+    .api-info {
+      background: rgba(232,255,71,.05);
+      border: 1px solid rgba(232,255,71,.15);
+      border-radius: var(--r-sm);
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.7;
+      color: var(--text2);
+    }
+    .api-info strong { color: var(--accent); }
+
+    /* ── SCREEN: OFFICINE VICINE ───────────────────────── */
+    #screen-nearby { padding: 20px; gap: 14px; }
+
+    .nearby-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nearby-header h2 { font-size: 18px; font-weight: 700; }
+
+    .nearby-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .05em;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      transition: all .15s;
+      text-transform: uppercase;
+    }
+    .filter-chip.active {
+      background: rgba(232,255,71,.12);
+      border-color: rgba(232,255,71,.4);
+      color: var(--accent);
+    }
+    .filter-chip:active { transform: scale(.95); }
+
+    .nearby-place {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color .15s;
+    }
+    .nearby-place:active { border-color: var(--accent); }
+
+    .nearby-place-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .nearby-place-name {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .nearby-place-type {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .nearby-place-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nearby-place-addr {
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.4;
+    }
+
+    .nearby-place-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nearby-dist {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text3);
+    }
+
+    .nearby-rating {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--warn);
+    }
+
+    .nearby-open {
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+    .nearby-open.open  { color: var(--ok); }
+    .nearby-open.closed { color: var(--danger); }
+
+    .nearby-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .nearby-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 12px;
+      border-radius: var(--r-sm);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      color: var(--text2);
+      transition: all .15s;
+    }
+    .nearby-btn.call {
+      background: rgba(46,213,115,.08);
+      border-color: rgba(46,213,115,.3);
+      color: var(--ok);
+    }
+    .nearby-btn.map {
+      background: rgba(232,255,71,.06);
+      border-color: rgba(232,255,71,.2);
+      color: var(--accent);
+    }
+    .nearby-btn:active { transform: scale(.96); }
+
+    .nearby-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text3);
+      text-align: center;
+      padding: 40px 20px;
+      min-height: 200px;
+    }
+    .nearby-empty .ico { font-size: 48px; opacity: .3; }
+    .nearby-empty p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .nearby-empty small {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--text3);
+      line-height: 1.6;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .nearby-info-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(232,255,71,.05);
+      border: 1px solid rgba(232,255,71,.12);
+      border-radius: var(--r-sm);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+
+    /* ── TOAST ─────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r);
+      padding: 12px 20px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--text);
+      opacity: 0;
+      transition: all .25s;
+      z-index: 999;
+      pointer-events: none;
+      max-width: calc(100vw - 40px);
+      white-space: normal;
+      text-align: center;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: var(--ok); color: var(--ok); }
+    #toast.error   { border-color: var(--danger); color: var(--danger); }
+    #toast.warn    { border-color: var(--warn); color: var(--warn); }
+
+    /* ── MODAL ─────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 500;
+      backdrop-filter: blur(4px);
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-sheet {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r) var(--r) 0 0;
+      width: 100%;
+      max-width: 480px;
+      max-height: 85dvh;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-handle {
+      width: 40px;
+      height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      margin: 0 auto;
+    }
+
+    /* ── ANIMAZIONI ────────────────────────────────────── */
+    .fade-in { animation: fadeUp .3s ease both; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════ HEADER ═══════════ -->
+  <header>
+    <div class="header-brand">
+      <svg class="header-logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#1a1a1a"/>
+        <circle cx="16" cy="16" r="10" stroke="#e8ff47" stroke-width="2.5"/>
+        <circle cx="16" cy="16" r="4" fill="#e8ff47"/>
+        <line x1="16" y1="6" x2="16" y2="4" stroke="#e8ff47" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="28" x2="16" y2="26" stroke="#e8ff47" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="16" x2="4" y2="16" stroke="#e8ff47" stroke-width="2" stroke-linecap="round"/>
+        <line x1="28" y1="16" x2="26" y2="16" stroke="#e8ff47" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="header-title">
+        TireCheck Fleet
+        <span>by PezzaliApp</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-icon" onclick="newScan()" title="Nuova scansione">＋</button>
+    </div>
+  </header>
+
+  <!-- ═══════════ SCREEN: HOME ═══════════ -->
+  <div id="screen-home" class="screen active">
+    <div style="padding:28px 20px;display:flex;flex-direction:column;gap:20px;flex:1">
+
+      <div style="text-align:center;padding:20px 0 10px">
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <rect width="72" height="72" rx="18" fill="#1a1a1a"/>
+          <circle cx="36" cy="36" r="24" stroke="#e8ff47" stroke-width="4"/>
+          <circle cx="36" cy="36" r="9" fill="#e8ff47"/>
+          <line x1="36" y1="12" x2="36" y2="8" stroke="#e8ff47" stroke-width="3" stroke-linecap="round"/>
+          <line x1="36" y1="64" x2="36" y2="60" stroke="#e8ff47" stroke-width="3" stroke-linecap="round"/>
+          <line x1="12" y1="36" x2="8" y2="36" stroke="#e8ff47" stroke-width="3" stroke-linecap="round"/>
+          <line x1="64" y1="36" x2="60" y2="36" stroke="#e8ff47" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div style="font-size:26px;font-weight:800;margin-top:14px;letter-spacing:-.5px">TireCheck Fleet</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.14em;margin-top:4px">BY PEZZALIAPP</div>
+        <div style="font-size:13px;color:var(--text2);margin-top:10px;line-height:1.6">Diagnosi pneumatici truck & bus con intelligenza artificiale.<br>Foto → Analisi → Scheda flotta PDF firmabile.</div>
+      </div>
+
+      <div id="home-status-card" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:.12em;color:var(--accent);text-transform:uppercase">Stato configurazione</div>
+        <div id="home-api-status" style="display:flex;align-items:center;gap:10px;font-size:13px"></div>
+        <div id="home-officina-status" style="display:flex;align-items:center;gap:10px;font-size:13px"></div>
+        <div id="home-webhook-status" style="display:flex;align-items:center;gap:10px;font-size:13px"></div>
+        <div id="home-places-status" style="display:flex;align-items:center;gap:10px;font-size:13px"></div>
+      </div>
+
+      <button class="btn btn-primary" style="font-size:17px;padding:18px" onclick="goScreen('scan');updateNav('scan')">
+        📸 Inizia scansione
+      </button>
+      <button class="btn btn-secondary" onclick="goScreen('settings');loadSettings();updateNav('settings')">
+        ⚙️ Configura impostazioni
+      </button>
+
+      <div id="home-stats" style="display:flex;gap:10px">
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center">
+          <div id="home-count" style="font-size:28px;font-weight:800;color:var(--accent)">0</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-top:2px">Analisi</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center">
+          <div id="home-ok-count" style="font-size:28px;font-weight:800;color:var(--ok)">0</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-top:2px">OK</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center">
+          <div id="home-danger-count" style="font-size:28px;font-weight:800;color:var(--danger)">0</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text2);text-transform:uppercase;margin-top:2px">Urgenti</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════ SCREEN: SCANSIONE ═══════════ -->
+  <div id="screen-scan" class="screen">
+
+    <!-- ── DUE SLOT FOTO ── -->
+    <div class="photo-slots">
+
+      <!-- Slot 1: battistrada (analisi usura) -->
+      <div class="photo-slot" id="slot-battistrada" onclick="triggerSlot('battistrada','camera')">
+        <img id="preview-battistrada" alt="Battistrada">
+        <div class="slot-placeholder" id="ph-battistrada">
+          <div class="slot-ico">📷</div>
+          <div class="slot-label">Battistrada<br>Usura truck / bus</div>
+        </div>
+        <div class="slot-overlay"></div>
+        <div class="slot-badge" id="badge-battistrada">1 · Tread</div>
+      </div>
+
+      <!-- Slot 2: fianco (OCR misura + DOT) -->
+      <div class="photo-slot" id="slot-fianco" onclick="triggerSlot('fianco','camera')">
+        <img id="preview-fianco" alt="Fianco pneumatico">
+        <div class="slot-placeholder" id="ph-fianco">
+          <div class="slot-ico">🔢</div>
+          <div class="slot-label">Fianco laterale<br>Misura + DOT truck</div>
+        </div>
+        <div class="slot-overlay"></div>
+        <div class="slot-badge" id="badge-fianco">2 · Sidewall</div>
+      </div>
+
+    </div>
+
+    <!-- input file separati -->
+    <input type="file" id="file-battistrada" accept="image/*" capture="environment">
+    <input type="file" id="file-fianco"      accept="image/*" capture="environment">
+
+    <!-- pulsanti scatta / galleria sotto ogni slot -->
+    <div class="dual-scan-actions">
+      <div style="display:flex;gap:0;border-right:1px solid var(--bg)">
+        <button class="dual-scan-btn battistrada" style="flex:1" onclick="triggerSlot('battistrada','camera')">
+          📸 Tread
+        </button>
+        <button class="btn-icon" onclick="triggerSlot('battistrada','gallery')" title="Galleria" style="border-radius:0;border-top:1px solid var(--border);border-left:1px solid var(--border);flex-shrink:0">🖼️</button>
+      </div>
+      <div style="display:flex;gap:0">
+        <button class="dual-scan-btn fianco" id="btn-slot-fianco" style="flex:1" onclick="triggerSlot('fianco','camera')">
+          🔢 Sidewall
+        </button>
+        <button class="btn-icon" onclick="triggerSlot('fianco','gallery')" title="Galleria" style="border-radius:0;border-top:1px solid var(--border);border-left:1px solid var(--border);flex-shrink:0">🖼️</button>
+      </div>
+    </div>
+
+    <div class="scan-form">
+
+      <!-- OCR status banner -->
+      <div class="ocr-banner" id="ocr-banner">
+        <div class="ocr-spinner"></div>
+        <span id="ocr-banner-text">Rilevamento misura truck e DOT in corso…</span>
+      </div>
+
+      <div class="section-label">Dati Mezzo / Flotta</div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Targa / ID mezzo</label>
+          <input type="text" id="f-targa" placeholder="AB123CD / BUS-12" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>Tipo mezzo</label>
+          <select id="f-tipo-mezzo">
+            <option value="Camion">Camion</option>
+            <option value="Autobus">Autobus / Pullman</option>
+            <option value="Eurocargo">Eurocargo</option>
+            <option value="Motrice + Semirimorchio">Motrice + Semirimorchio</option>
+            <option value="Rimorchio / Trailer">Rimorchio / Trailer</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Asse</label>
+          <select id="f-posizione">
+            <option value="Asse 1">Asse 1</option>
+            <option value="Asse 2">Asse 2</option>
+            <option value="Asse 3">Asse 3</option>
+            <option value="Asse 4">Asse 4</option>
+            <option value="Asse 5">Asse 5</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ruota</label>
+          <select id="f-lato">
+            <option value="SX esterna">SX esterna</option>
+            <option value="SX interna">SX interna</option>
+            <option value="DX interna">DX interna</option>
+            <option value="DX esterna">DX esterna</option>
+            <option value="Singola SX">Singola SX</option>
+            <option value="Singola DX">Singola DX</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Tipo asse</label>
+          <select id="f-tipo-asse">
+            <option value="Sterzante">Sterzante</option>
+            <option value="Trazione">Trazione</option>
+            <option value="Trailer">Trailer</option>
+            <option value="Bus / Servizio">Bus / Servizio</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Montaggio</label>
+          <select id="f-montaggio">
+            <option value="Singolo">Singolo</option>
+            <option value="Gemellato">Gemellato</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Marca mezzo</label>
+          <input type="text" id="f-marca-veicolo" placeholder="es. Iveco, Mercedes, MAN…">
+        </div>
+        <div class="field">
+          <label>Km mezzo</label>
+          <input type="number" id="f-km" placeholder="es. 185000">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cliente / Flotta</label>
+        <input type="text" id="f-cliente" placeholder="Nome cliente, flotta o commessa">
+      </div>
+
+      <div class="section-label">Dati Pneumatico <span style="color:var(--text3);font-size:8px">(da foto fianco · editabili)</span></div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Marca gomma</label>
+          <input type="text" id="f-marca" placeholder="es. Michelin, Pirelli, Bridgestone">
+        </div>
+        <div class="field">
+          <label>Misura</label>
+          <input type="text" id="f-misura" placeholder="315/80 R22.5">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="field">
+          <label>Codice DOT</label>
+          <input type="text" id="f-dot" placeholder="DOT rilevato dalla foto" style="font-family:var(--font-mono);letter-spacing:.04em">
+        </div>
+        <div class="field">
+          <label>Pressione (bar)</label>
+          <input type="number" id="f-pressione" placeholder="es. 8.5" step="0.1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Note operatore</label>
+        <input type="text" id="f-note" placeholder="Usura spalla, taglio, inversione consigliata…">
+      </div>
+
+      <button class="btn btn-primary" id="btn-analyze" onclick="startAnalysis()" disabled>
+        🔍 Analizza con AI
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════ SCREEN: ANALISI ═══════════ -->
+  <div id="screen-analysis" class="screen">
+
+    <div class="analysis-header fade-in">
+      <h2>Risultato Analisi</h2>
+      <p id="analysis-subtitle">in elaborazione…</p>
+    </div>
+
+    <img id="result-thumb" class="result-thumb" alt="Pneumatico analizzato">
+
+    <div class="ai-status" id="ai-status">
+      <div class="spinner"></div>
+      <div class="ai-status-text">Analisi AI in corso…</div>
+    </div>
+
+    <div id="results-container" style="display:none;flex-direction:column;gap:16px">
+
+      <!-- esito principale -->
+      <div class="card" style="text-align:center;padding:20px">
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Esito</div>
+        <div id="esito-badge" style="display:flex;justify-content:center;margin-bottom:8px"></div>
+        <div id="esito-title" style="font-size:22px;font-weight:800;margin-top:4px"></div>
+      </div>
+
+      <!-- dati pneumatico rilevati -->
+      <div>
+        <div class="section-label">Dati Pneumatico Rilevati</div>
+        <div class="tire-specs-card">
+          <div class="tire-spec-item">
+            <div class="metric-label">Misura</div>
+            <div class="tire-spec-value" id="r-misura">—</div>
+          </div>
+          <div class="tire-spec-item">
+            <div class="metric-label">Codice DOT</div>
+            <div class="tire-spec-value" id="r-dot">—</div>
+          </div>
+          <div class="tire-spec-item">
+            <div class="metric-label">Anno prod.</div>
+            <div class="tire-spec-value" id="r-dot-year">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- metriche -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Profondità stimata</div>
+          <div class="metric-value" id="m-depth">—</div>
+          <div class="metric-sub">verificare soglia per asse/impiego</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Usura asse</div>
+          <div class="metric-value" id="m-uniform">—</div>
+          <div class="metric-sub" id="m-uniform-sub"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Condizione fianco</div>
+          <div class="metric-value" id="m-side">—</div>
+          <div class="metric-sub" id="m-side-sub"></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Priorità</div>
+          <div class="metric-value" id="m-urgency">—</div>
+          <div class="metric-sub" id="m-urgency-sub"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Valutazione tecnica AI</div>
+        <div class="ai-comment" id="ai-comment">—</div>
+      </div>
+
+      <div class="signature-section">
+        <div class="section-label">Firma Cliente</div>
+        <div class="signature-pad-wrap">
+          <canvas id="signature-pad" width="800" height="240"></canvas>
+          <div class="signature-hint" id="sign-hint">Firma qui</div>
+        </div>
+        <div class="sign-actions">
+          <button class="btn btn-secondary btn-sm" onclick="clearSignature()">✕ Cancella</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleSignatureRequired()" id="btn-skip-sign" style="flex:1">Procedi senza firma</button>
+        </div>
+      </div>
+
+      <div class="analysis-actions">
+        <button class="btn btn-primary" onclick="generatePDF()">📄 Genera Report PDF</button>
+        <button class="btn btn-secondary" onclick="sendWebhook()">📡 Invia a Make.com</button>
+        <button class="btn btn-secondary" onclick="goNearby()">📍 Trova assistenza vicina</button>
+        <button class="btn btn-secondary" onclick="newScan()">＋ Nuova scansione</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════ SCREEN: STORICO ═══════════ -->
+  <div id="screen-history" class="screen">
+    <div class="history-header">
+      <h2>Storico</h2>
+      <span class="history-count" id="history-count">0 analisi</span>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ═══════════ SCREEN: OFFICINE VICINE ═══════════ -->
+  <div id="screen-nearby" class="screen">
+    <div class="nearby-header">
+      <h2>Assistenza Vicina</h2>
+      <button class="btn-icon" onclick="refreshNearby()" title="Aggiorna" id="btn-refresh-nearby">🔄</button>
+    </div>
+
+    <div class="nearby-info-bar" id="nearby-info-bar" style="display:none">
+      <span>📍</span>
+      <span id="nearby-info-text">Ricerca in corso…</span>
+    </div>
+
+    <div class="nearby-filters">
+      <button class="filter-chip active" id="chip-gommisti" onclick="toggleFilter('gommisti')">🔧 Gommisti</button>
+      <button class="filter-chip active" id="chip-autofficine" onclick="toggleFilter('autofficine')">🛠️ Autofficine</button>
+      <button class="filter-chip active" id="chip-concessionarie" onclick="toggleFilter('concessionarie')">🏢 Concessionarie</button>
+    </div>
+
+    <div id="nearby-list">
+      <div class="nearby-empty">
+        <div class="ico">📍</div>
+        <p>Nessuna ricerca effettuata</p>
+        <small>Premi il pulsante in basso per trovare<br>assistenza, gommisti e officine vicino a te</small>
+      </div>
+    </div>
+
+    <div style="padding-bottom:10px">
+      <button class="btn btn-primary" onclick="startNearbySearch()" id="btn-start-nearby">
+        📍 Trova vicino a me
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════ SCREEN: IMPOSTAZIONI ═══════════ -->
+  <div id="screen-settings" class="screen">
+    <div class="settings-title">Impostazioni</div>
+
+    <div class="settings-section">
+      <div class="section-label">Gemini AI</div>
+
+      <!-- NOTA INFORMATIVA API -->
+      <div style="background:rgba(232,255,71,.06);border:1px solid rgba(232,255,71,.2);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--accent)">ℹ️ Come funziona l'API Gemini</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7">
+          TireCheck Fleet usa <strong style="color:var(--text)">Google Gemini Vision AI</strong> per analizzare le foto dei pneumatici truck e bus.
+          La chiave API è gratuita e si crea in pochi minuti su
+          <strong style="color:var(--accent)">aistudio.google.com → Get API Key</strong>.
+        </div>
+
+        <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Piano gratuito</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7">
+            ✅ Perfetto per <strong style="color:var(--text)">uso personale</strong> o demo sul proprio veicolo<br>
+            ✅ Nessuna carta di credito richiesta<br>
+            ⚠️ Limite: <strong style="color:var(--warn)">20 analisi al giorno</strong> (reset a mezzanotte)<br>
+            ⚠️ Rate limit: max 10 richieste al minuto
+          </div>
+        </div>
+
+        <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Piano a pagamento (consigliato per officina)</div>
+          <div style="font-size:13px;color:var(--text2);line-height:1.7">
+            ✅ Analisi illimitate — nessun blocco giornaliero<br>
+            ✅ Rate limit molto più alto (1000+ RPD)<br>
+            💶 Costo reale: circa <strong style="color:var(--ok)">€0.18 ogni 1000 scansioni</strong><br>
+            💶 Per officina / flotta: <strong style="color:var(--ok)">meno di €0.50/mese</strong><br>
+            → Attiva su <strong style="color:var(--accent)">aistudio.google.com → Fatturazione</strong>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid rgba(255,255,255,.06);padding-top:10px;font-family:var(--font-mono);font-size:10px;color:var(--text3);line-height:1.6">
+          🔐 <strong style="color:var(--text2)">Privacy:</strong> la chiave è salvata solo su questo dispositivo e inviata esclusivamente a Google. Non transita su nessun server PezzaliApp.
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Gemini API Key</label>
+        <input type="password" id="s-gemini-key" placeholder="AIzaSy…" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-label">Make.com Webhook</div>
+      <div class="field">
+        <label>Webhook URL</label>
+        <input type="url" id="s-webhook" placeholder="https://hook.eu1.make.com/…">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-label">Officina</div>
+      <div class="field">
+        <label>Nome officina</label>
+        <input type="text" id="s-officina" placeholder="es. Pneumatici Rossi">
+      </div>
+      <div class="field">
+        <label>Telefono</label>
+        <input type="tel" id="s-tel" placeholder="+39 …">
+      </div>
+      <div class="field">
+        <label>Indirizzo</label>
+        <input type="text" id="s-addr" placeholder="Via …, Città">
+      </div>
+      <div class="field">
+        <label>P.IVA</label>
+        <input type="text" id="s-piva" placeholder="IT00000000000">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveSettings()">💾 Salva impostazioni</button>
+    <button class="btn btn-danger" onclick="clearHistory()" style="margin-top:4px">🗑️ Svuota storico</button>
+
+    <div style="text-align:center;font-family:var(--font-mono);font-size:9px;color:var(--text3);padding:10px 0">
+      TireCheck Fleet · v1.0 · PezzaliApp
+    </div>
+  </div>
+
+  <!-- ═══════════ BOTTOM NAV ═══════════ -->
+  <nav>
+    <button class="nav-btn active" id="nav-home" onclick="goScreen('home');loadHome()">
+      <span class="ico">🏠</span>Home
+    </button>
+    <button class="nav-btn" id="nav-scan" onclick="goScreen('scan');updateNav('scan')">
+      <span class="ico">🔍</span>Scansione
+    </button>
+    <button class="nav-btn" id="nav-analysis" onclick="goScreen('analysis');updateNav('analysis')">
+      <span class="ico">📊</span>Analisi
+    </button>
+    <button class="nav-btn" id="nav-nearby" onclick="goScreen('nearby');updateNav('nearby')">
+      <span class="ico">📍</span>Vicino
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="goScreen('history');loadHistory();updateNav('history')">
+      <span class="ico">📋</span>Storico
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="goScreen('settings');loadSettings();updateNav('settings')">
+      <span class="ico">⚙️</span>Setup
+    </button>
+  </nav>
+
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-backdrop" id="detail-modal" onclick="closeModal(event)">
+  <div class="modal-sheet" id="detail-sheet">
+    <div class="modal-handle"></div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="onboarding-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center">
+      <div style="font-size:48px;margin-bottom:12px">🔧</div>
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Benvenuto in TireCheck Fleet</h2>
+      <p style="font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.7">
+        Per usare l'analisi AI inserisci la tua <strong style="color:var(--accent)">Gemini API Key</strong> gratuita.<br>
+        Vai su <strong>aistudio.google.com</strong> → Get API Key → crea chiave gratuita.
+      </p>
+    </div>
+    <button class="btn btn-primary" onclick="closeOnboarding()">Configura ora →</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('onboarding-modal').classList.remove('open')" style="margin-top:4px">Dopo</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   TIRECHECK FLEET v1.0 · LOGICA APPLICAZIONE
+   PezzaliApp © 2025
+═══════════════════════════════════════════════ */
+
+// ── STATE ──────────────────────────────────────
+const state = {
+  currentImage: null,
+  currentImageFile: null,
+  analysisResult: null,
+  signatureData: null,
+  signaturePad: null,
+  isDrawing: false,
+  hasDrawn: false,
+  skipSignature: false,
+  nearbyPlaces: [],
+  nearbyFilters: { gommisti: true, autofficine: true, concessionarie: true },
+  userLat: null,
+  userLng: null,
+};
+
+// ── STORAGE KEYS ───────────────────────────────
+const KEYS = {
+  gemini:    'tirecheck-fleet-gemini-key',
+  webhook:   'tirecheck-fleet-webhook',
+  officina:  'tirecheck-fleet-officina',
+  tel:       'tirecheck-fleet-tel',
+  addr:      'tirecheck-fleet-addr',
+  piva:      'tirecheck-fleet-piva',
+  history:   'tirecheck-fleet-history',
+};
+
+// ── INIT ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+  initSignaturePad();
+  setupFileInput();
+  goScreen('home');
+  loadHome();
+  // first run check
+  if (!ls(KEYS.gemini)) {
+    document.getElementById('onboarding-modal').classList.add('open');
+  }
+});
+
+// ── NAVIGATION ─────────────────────────────────
+function updateNav(name) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('nav-' + name);
+  if (btn) btn.classList.add('active');
+}
+
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+  updateNav(name);
+}
+
+// ── LOAD HOME ──────────────────────────────────
+function loadHome() {
+  const key      = ls(KEYS.gemini);
+  const officina = ls(KEYS.officina);
+  const webhook  = ls(KEYS.webhook);
+
+  const apiEl    = document.getElementById('home-api-status');
+  const offEl    = document.getElementById('home-officina-status');
+  const whEl     = document.getElementById('home-webhook-status');
+  const placesEl = document.getElementById('home-places-status');
+
+  if (apiEl) apiEl.innerHTML = key
+    ? '<span style="color:var(--ok)">✅</span> Gemini API Key configurata'
+    : '<span style="color:var(--danger)">❌</span> <strong>Gemini API Key mancante</strong> — vai in Setup';
+
+  if (offEl) offEl.innerHTML = officina
+    ? `<span style="color:var(--ok)">✅</span> Officina: ${officina}`
+    : '<span style="color:var(--text3)">○</span> Nome officina non impostato';
+
+  if (whEl) whEl.innerHTML = webhook
+    ? '<span style="color:var(--ok)">✅</span> Make.com webhook configurato'
+    : '<span style="color:var(--text3)">○</span> Webhook Make.com non configurato';
+
+  if (placesEl) placesEl.innerHTML = '<span style="color:var(--ok)">✅</span> Officine vicine via Google Maps (no API key)';
+
+  const history = getHistory();
+  const okCount     = history.filter(h => h.esito === 'OK').length;
+  const dangerCount = history.filter(h => h.esito === 'SOSTITUIRE').length;
+  const countEl  = document.getElementById('home-count');
+  const okEl     = document.getElementById('home-ok-count');
+  const dangerEl = document.getElementById('home-danger-count');
+  if (countEl)  countEl.textContent  = history.length;
+  if (okEl)     okEl.textContent     = okCount;
+  if (dangerEl) dangerEl.textContent = dangerCount;
+
+  updateNav('home');
+}
+
+// ── FILE INPUT / CAMERA ────────────────────────
+function setupFileInput() {
+  const fi1 = document.getElementById('file-battistrada');
+  const fi2 = document.getElementById('file-fianco');
+  fi1.addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    handleBattistradaFile(file); fi1.value = '';
+  });
+  fi2.addEventListener('change', e => {
+    const file = e.target.files[0]; if (!file) return;
+    handleFiancoFile(file); fi2.value = '';
+  });
+}
+
+function triggerSlot(slot, mode) {
+  const fi = document.getElementById(slot === 'battistrada' ? 'file-battistrada' : 'file-fianco');
+  if (mode === 'camera') fi.setAttribute('capture', 'environment');
+  else fi.removeAttribute('capture');
+  fi.click();
+}
+
+// retrocompatibilità (non usate ma lasciate per sicurezza)
+function triggerCamera()  { triggerSlot('battistrada','camera'); }
+function triggerGallery() { triggerSlot('battistrada','gallery'); }
+
+// Foto 1: battistrada → analisi usura
+function handleBattistradaFile(file) {
+  state.currentImageFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.currentImage = e.target.result;
+    const img = document.getElementById('preview-battistrada');
+    img.src = state.currentImage;
+    img.classList.add('loaded');
+    document.getElementById('ph-battistrada').style.display = 'none';
+    const badge = document.getElementById('badge-battistrada');
+    badge.textContent = '✓ Pronto'; badge.className = 'slot-badge ok';
+    document.getElementById('btn-analyze').disabled = false;
+    toast('Battistrada caricato — pronto per analisi', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+// Foto 2: fianco → OCR misura + DOT
+function handleFiancoFile(file) {
+  state.fiancoImageFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.fiancoImage = e.target.result;
+    const img = document.getElementById('preview-fianco');
+    img.src = state.fiancoImage;
+    img.classList.add('loaded');
+    document.getElementById('ph-fianco').style.display = 'none';
+    const badge = document.getElementById('badge-fianco');
+    badge.textContent = '⏳ OCR…'; badge.className = 'slot-badge active';
+    document.getElementById('btn-slot-fianco').classList.add('has-photo');
+    toast('Foto fianco caricata — OCR in corso…', 'success');
+    runOcrExtraction();
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── OCR: ESTRAZIONE MISURA + DOT DAL FIANCO ────
+async function runOcrExtraction() {
+  const apiKey = ls(KEYS.gemini);
+  if (!apiKey || !state.fiancoImage) return;
+
+  const banner = document.getElementById('ocr-banner');
+  banner.classList.add('visible');
+  document.getElementById('ocr-banner-text').textContent = 'Lettura fianco: misura e DOT in corso…';
+
+  const base64    = state.fiancoImage.split(',')[1];
+  const mimeMatch = state.fiancoImage.match(/data:(image\/[^;]+);/);
+  const mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+
+  const ocrPrompt = `Sei un tecnico esperto di pneumatici truck e bus. Analizza questa foto del FIANCO LATERALE del pneumatico.
+
+Sul fianco del pneumatico possono comparire queste informazioni che devi estrarre:
+1. MISURA truck/bus: esempi "315/80 R22.5", "295/80R22.5", "385/65 R22.5", "275/70 R22.5", "13R22.5"
+2. CODICE DOT: inizia con "DOT" oppure è una sequenza finale leggibile; le ultime 4 cifre indicano settimana e anno di produzione
+3. MARCA del pneumatico (es. Michelin, Pirelli, Continental, Bridgestone, Goodyear, Hankook, Nokian, Firestone)
+4. Eventuale indice di carico/velocità solo se chiaramente leggibile
+
+ISTRUZIONI:
+- Leggi SOLO quello che è chiaramente visibile.
+- Se un dato non è visibile o la foto è sfocata, scrivi null.
+- NON inventare dati. Meglio null che un valore errato.
+- Mantieni la misura esattamente come letta, normalizzando solo gli spazi.
+- Per il DOT: se vedi solo le ultime 4 cifre, restituiscile comunque come stringa.
+
+Rispondi SOLO con JSON valido senza markdown:
+{
+  "misura": "315/80 R22.5" oppure null,
+  "dot": "DOT ABCD 1224" oppure "1224" oppure null,
+  "anno_produzione": 2024 oppure null,
+  "marca": "Michelin" oppure null,
+  "indice_carico_velocita": "154/150M" oppure null,
+  "leggibilita": "buona" oppure "parziale" oppure "scarsa"
+}`;
+
+  const MODEL = 'gemini-2.5-flash-lite';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inlineData: { mimeType, data: base64 } },
+          { text: ocrPrompt }
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 300 },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ],
+      })
+    });
+
+    if (!response.ok) throw new Error(`OCR API ${response.status}`);
+
+    const data = await response.json();
+    const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('[TireCheck OCR]', raw);
+
+    let ocr;
+    const clean = raw.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+    const mj = clean.match(/\{[\s\S]*\}/);
+    if (mj) { try { ocr = JSON.parse(mj[0]); } catch(ex) {} }
+
+    const badge = document.getElementById('badge-fianco');
+
+    if (ocr) {
+      const misuraInput = document.getElementById('f-misura');
+      const dotInput    = document.getElementById('f-dot');
+      const marcaInput  = document.getElementById('f-marca');
+      const found = [];
+      if (ocr.misura && !misuraInput.value.trim()) { misuraInput.value = ocr.misura; found.push('misura'); }
+      if (ocr.dot    && !dotInput.value.trim())    { dotInput.value    = ocr.dot;    found.push('DOT'); }
+      if (ocr.marca  && !marcaInput.value.trim())  { marcaInput.value  = ocr.marca;  found.push('marca'); }
+      state.ocrAnno = ocr.anno_produzione || null;
+
+      if (found.length > 0) {
+        const txt = `✅ Rilevati: ${found.join(', ')}${ocr.leggibilita === 'scarsa' ? ' (verifica)' : ' — correggi se necessario'}`;
+        document.getElementById('ocr-banner-text').textContent = txt;
+        badge.textContent = `✓ ${found.join('+')}`;
+        badge.className   = 'slot-badge ok';
+        setTimeout(() => banner.classList.remove('visible'), 5000);
+      } else {
+        document.getElementById('ocr-banner-text').textContent =
+          ocr.leggibilita === 'scarsa'
+            ? '⚠️ Foto poco leggibile — avvicina e riprova'
+            : '⚠️ Dati non rilevati — inserisci manualmente';
+        badge.textContent = '⚠️ N/D';
+        badge.className   = 'slot-badge';
+        setTimeout(() => banner.classList.remove('visible'), 5000);
+      }
+    } else {
+      badge.textContent = '⚠️ Errore'; badge.className = 'slot-badge';
+      banner.classList.remove('visible');
+    }
+  } catch(e) {
+    console.warn('[TireCheck OCR]', e);
+    document.getElementById('badge-fianco').textContent = '⚠️ Errore OCR';
+    document.getElementById('badge-fianco').className   = 'slot-badge';
+    banner.classList.remove('visible');
+  }
+}
+
+// ── ANALISI AI ─────────────────────────────────
+async function startAnalysis() {
+  const apiKey = ls(KEYS.gemini);
+  if (!apiKey) {
+    toast('⚠️ Configura la Gemini API Key nelle impostazioni', 'error');
+    return;
+  }
+  if (!state.currentImage) {
+    toast('⚠️ Scatta prima una foto del pneumatico', 'warn');
+    return;
+  }
+
+  goScreen('analysis');
+  document.getElementById('analysis-subtitle').textContent = 'analisi in corso…';
+  document.getElementById('ai-status').style.display = 'flex';
+  document.getElementById('results-container').style.display = 'none';
+
+  const thumb = document.getElementById('result-thumb');
+  thumb.src = state.currentImage;
+  thumb.style.display = 'block';
+
+  const base64   = state.currentImage.split(',')[1];
+  const mimeMatch = state.currentImage.match(/data:(image\/[^;]+);/);
+  const mimeType  = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+
+  // leggi i campi attuali (eventualmente già pre-compilati da OCR)
+  const misuraAttuale = document.getElementById('f-misura').value.trim();
+  const dotAttuale    = document.getElementById('f-dot').value.trim();
+
+  const prompt = `Sei un tecnico gommista fleet esperto in pneumatici per camion, autobus, eurocargo, motrici e trailer. Analizza questa foto del battistrada.
+
+DATI GIÀ DISPONIBILI (verificati dall'utente):
+- Misura: ${misuraAttuale || 'da rilevare'}
+- DOT: ${dotAttuale || 'da rilevare'}
+- Tipo mezzo: ${document.getElementById('f-tipo-mezzo')?.value || 'non indicato'}
+- Tipo asse: ${document.getElementById('f-tipo-asse')?.value || 'non indicato'}
+- Montaggio: ${document.getElementById('f-montaggio')?.value || 'non indicato'}
+
+REGOLE CRITICHE:
+1. Valuta SOLO ciò che è chiaramente visibile nel battistrada. NON fare supposizioni.
+2. Se la foto è angolata o il battistrada non è leggibile frontalmente: usa ATTENZIONE e profondita_mm null.
+3. Usa SOSTITUIRE solo se vedi chiaramente battistrada esaurito, danni strutturali evidenti o usura gravemente irregolare.
+4. Segnala come ipotesi tecnica, non come certezza, possibili cause come sotto/sovra gonfiaggio o assetto/convergenza.
+5. Per truck e bus considera pattern come usura centrale, spalla interna, spalla esterna, dentellata, irregolare, coppia gemellata.
+6. In caso di dubbio scegli sempre l'esito più prudente ma non allarmistico: OK > ATTENZIONE > SOSTITUIRE.
+
+Rispondi SOLO con JSON valido, niente markdown:
+{
+  "esito": "OK" oppure "ATTENZIONE" oppure "SOSTITUIRE",
+  "profondita_mm": numero decimale oppure null,
+  "usura_uniforme": true oppure false,
+  "tipo_usura": "uniforme" oppure "centrale" oppure "spalla interna" oppure "spalla esterna" oppure "dentellata" oppure "irregolare" oppure "non determinabile",
+  "condizione_fianco": "OK" oppure "VERIFICARE" oppure "DANNEGGIATO",
+  "urgenza": "bassa" oppure "media" oppure "alta" oppure "critica",
+  "misura": "315/80 R22.5" oppure null,
+  "dot": "stringa DOT" oppure null,
+  "anno_produzione": numero anno oppure null,
+  "commento": "Descrizione tecnica in italiano di massimo 4 frasi con ciò che vedi e l'azione consigliata per flotta/officina."
+}`;
+
+  const MODEL = 'gemini-2.5-flash-lite';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { inlineData: { mimeType, data: base64 } },
+          { text: prompt }
+        ]}],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 800, topP: 0.8 },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        ],
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(`Gemini error: ${errData.error?.message || `HTTP ${response.status}`}`);
+    }
+
+    const data = await response.json();
+    const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('[TireCheck] Gemini raw:', raw);
+
+    if (!raw) {
+      const reason = data.candidates?.[0]?.finishReason;
+      if (reason === 'SAFETY') throw new Error('Immagine bloccata dai filtri Gemini - prova altra foto');
+      throw new Error('Risposta Gemini vuota (finishReason: ' + (reason || 'sconosciuto') + ')');
+    }
+
+    let result;
+    const attempts = [
+      () => JSON.parse(raw.trim()),
+      () => JSON.parse(raw.replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim()),
+      () => { const m = raw.match(/\{[\s\S]*?\}/); if(m) return JSON.parse(m[0]); throw 0; },
+      () => { const m = raw.match(/\{[\s\S]*\}/);  if(m) return JSON.parse(m[0]); throw 0; },
+    ];
+    let parseErr;
+    for (const fn of attempts) { try { result = fn(); break; } catch(e) { parseErr = e; } }
+    if (!result) throw new Error('JSON non parsabile. Dettaglio: ' + (parseErr?.message || 'parse error'));
+
+    // normalizza
+    if (!result.esito || !['OK','ATTENZIONE','SOSTITUIRE'].includes(result.esito)) result.esito = 'ATTENZIONE';
+    result.profondita_mm    = result.profondita_mm ?? result['profondità_mm'] ?? null;
+    result.usura_uniforme   = result.usura_uniforme ?? true;
+    result.tipo_usura       = result.tipo_usura ?? 'non determinato';
+    result.condizione_fianco = result.condizione_fianco ?? 'VERIFICARE';
+    result.urgenza          = result.urgenza ?? 'media';
+    result.commento         = result.commento ?? raw.substring(0, 300);
+
+    // usa misura/DOT da form (già compilati da OCR o manualmente) se AI non li trova
+    result.misura = misuraAttuale || result.misura || null;
+    result.dot    = dotAttuale    || result.dot    || null;
+    result.anno_produzione = result.anno_produzione || state.ocrAnno || null;
+
+    state.analysisResult = {
+      ...result,
+      targa:         document.getElementById('f-targa').value.toUpperCase(),
+      tipo_mezzo:    document.getElementById('f-tipo-mezzo').value,
+      posizione:     document.getElementById('f-posizione').value,
+      lato:          document.getElementById('f-lato').value,
+      tipo_asse:     document.getElementById('f-tipo-asse').value,
+      montaggio:     document.getElementById('f-montaggio').value,
+      km_mezzo:      document.getElementById('f-km').value,
+      marca_gomma:   document.getElementById('f-marca').value,
+      marca_veicolo: document.getElementById('f-marca-veicolo').value,
+      pressione_bar: document.getElementById('f-pressione').value,
+      note_operatore: document.getElementById('f-note').value,
+      cliente:       document.getElementById('f-cliente').value,
+      timestamp:     new Date().toISOString(),
+      image:         state.currentImage,
+      image_sidewall: state.fiancoImage || null,
+    };
+
+    showResults(state.analysisResult);
+    saveToHistory(state.analysisResult);
+    toast(`✅ Analisi completata (${MODEL})`, 'success');
+
+  } catch (err) {
+    console.error('[TireCheck] Errore finale:', err);
+    document.getElementById('ai-status').innerHTML = `
+      <div style="font-size:24px">⚠️</div>
+      <div class="ai-status-text" style="color:var(--danger)">
+        ${err.message}<br>
+        <small style="font-size:10px;color:var(--text3)">Apri F12 → Console per dettagli tecnici</small>
+      </div>`;
+    toast(err.message, 'error');
+  }
+}
+
+// ── MOSTRA RISULTATI ───────────────────────────
+function showResults(r) {
+  document.getElementById('ai-status').style.display = 'none';
+  const rc = document.getElementById('results-container');
+  rc.style.display = 'flex';
+  rc.style.flexDirection = 'column';
+  rc.style.gap = '16px';
+
+  document.getElementById('analysis-subtitle').textContent =
+    `${r.targa || 'Veicolo'} · ${r.posizione}`;
+
+  // esito badge
+  const map = {
+    'OK':         { cls: 'badge-ok',     ico: '✅', label: 'OK — Buone condizioni' },
+    'ATTENZIONE': { cls: 'badge-warn',   ico: '⚠️', label: 'Da monitorare' },
+    'SOSTITUIRE': { cls: 'badge-danger', ico: '🔴', label: 'Sostituzione necessaria' },
+  };
+  const m = map[r.esito] || map['ATTENZIONE'];
+  document.getElementById('esito-badge').innerHTML =
+    `<span class="badge ${m.cls}">${m.ico} ${r.esito}</span>`;
+  document.getElementById('esito-title').textContent = m.label;
+  document.getElementById('esito-title').style.color =
+    r.esito === 'OK' ? 'var(--ok)' : r.esito === 'ATTENZIONE' ? 'var(--warn)' : 'var(--danger)';
+
+  // dati pneumatico
+  const misuraEl = document.getElementById('r-misura');
+  const dotEl    = document.getElementById('r-dot');
+  const yearEl   = document.getElementById('r-dot-year');
+  misuraEl.textContent = r.misura || '—';
+  misuraEl.className   = 'tire-spec-value' + (r.misura ? '' : ' unknown');
+  dotEl.textContent    = r.dot ? r.dot.replace(/^DOT\s*/i,'DOT ') : '—';
+  dotEl.className      = 'tire-spec-value' + (r.dot ? '' : ' unknown');
+  if (r.anno_produzione) {
+    yearEl.textContent = r.anno_produzione;
+    const age = new Date().getFullYear() - r.anno_produzione;
+    yearEl.className   = 'tire-spec-value ' + (age >= 6 ? 'danger' : age >= 4 ? 'warn' : 'ok');
+    yearEl.title       = `${age} anni di età`;
+  } else {
+    yearEl.textContent = '—';
+    yearEl.className   = 'tire-spec-value unknown';
+  }
+
+  // metriche
+  const depth = r.profondita_mm ?? '?';
+  const depthEl = document.getElementById('m-depth');
+  depthEl.textContent = `${depth} mm`;
+  depthEl.className   = 'metric-value ' + (depth >= 4 ? 'ok' : depth >= 2 ? 'warn' : 'danger');
+
+  const unifEl = document.getElementById('m-uniform');
+  unifEl.textContent = r.usura_uniforme ? 'Sì' : 'No';
+  unifEl.className   = 'metric-value ' + (r.usura_uniforme ? 'ok' : 'warn');
+  document.getElementById('m-uniform-sub').textContent = r.tipo_usura || '';
+
+  const sideEl = document.getElementById('m-side');
+  sideEl.textContent = r.condizione_fianco || '—';
+  sideEl.className   = 'metric-value ' + (r.condizione_fianco === 'OK' ? 'ok' : r.condizione_fianco === 'DANNEGGIATO' ? 'danger' : 'warn');
+
+  const urgEl = document.getElementById('m-urgency');
+  urgEl.textContent = (r.urgenza || '—').charAt(0).toUpperCase() + (r.urgenza || '').slice(1);
+  urgEl.className   = 'metric-value ' + (r.urgenza === 'bassa' ? 'ok' : r.urgenza === 'media' ? 'warn' : 'danger');
+
+  document.getElementById('ai-comment').textContent = r.commento || '—';
+
+  clearSignature();
+  state.skipSignature = false;
+  document.getElementById('btn-skip-sign').textContent = 'Procedi senza firma';
+}
+
+// ── FIRMA DIGITALE ─────────────────────────────
+function initSignaturePad() {
+  const canvas = document.getElementById('signature-pad');
+  const ctx = canvas.getContext('2d');
+  state.signaturePad = ctx;
+
+  ctx.strokeStyle = '#1a1a2e';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const getPos = e => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY,
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  };
+
+  const start = e => {
+    e.preventDefault();
+    state.isDrawing = true;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    if (!state.hasDrawn) {
+      state.hasDrawn = true;
+      document.getElementById('sign-hint').classList.add('hidden');
+    }
+  };
+
+  const draw = e => {
+    e.preventDefault();
+    if (!state.isDrawing) return;
+    const p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  };
+
+  const end = e => {
+    e.preventDefault();
+    state.isDrawing = false;
+    ctx.beginPath();
+    state.signatureData = canvas.toDataURL('image/png');
+  };
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', draw,  { passive: false });
+  canvas.addEventListener('touchend',  end,   { passive: false });
+}
+
+function clearSignature() {
+  const canvas = document.getElementById('signature-pad');
+  state.signaturePad.clearRect(0, 0, canvas.width, canvas.height);
+  state.hasDrawn = false;
+  state.signatureData = null;
+  document.getElementById('sign-hint').classList.remove('hidden');
+}
+
+function toggleSignatureRequired() {
+  state.skipSignature = !state.skipSignature;
+  const btn = document.getElementById('btn-skip-sign');
+  btn.textContent = state.skipSignature ? '✓ Firma non richiesta' : 'Procedi senza firma';
+}
+
+// ── OFFICINE VICINE ────────────────────────────
+function goNearby() {
+  goScreen('nearby');
+  updateNav('nearby');
+}
+
+function toggleFilter(type) {
+  state.nearbyFilters[type] = !state.nearbyFilters[type];
+  document.getElementById(`chip-${type}`).classList.toggle('active', state.nearbyFilters[type]);
+  renderNearbyLinks();
+}
+
+function refreshNearby() {
+  startNearbySearch();
+}
+
+async function startNearbySearch() {
+  const listEl   = document.getElementById('nearby-list');
+  const infoBar  = document.getElementById('nearby-info-bar');
+  const infoText = document.getElementById('nearby-info-text');
+  const startBtn = document.getElementById('btn-start-nearby');
+
+  infoBar.style.display = 'flex';
+  infoText.textContent  = '📡 Ottengo posizione GPS…';
+  startBtn.disabled     = true;
+  startBtn.textContent  = '⏳ Localizzazione…';
+
+  listEl.innerHTML = `
+    <div class="nearby-empty">
+      <div style="width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px"></div>
+      <p>Ottengo posizione…</p>
+    </div>`;
+
+  try {
+    const pos = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('GPS non supportato')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true, timeout: 10000, maximumAge: 60000,
+      });
+    });
+
+    state.userLat = pos.coords.latitude;
+    state.userLng = pos.coords.longitude;
+
+    const marcaVeicolo = (state.analysisResult?.marca_veicolo ||
+                          document.getElementById('f-marca-veicolo')?.value || '').trim();
+
+    infoText.textContent = `📍 Posizione trovata${marcaVeicolo ? ' · Veicolo: ' + marcaVeicolo : ''}`;
+
+    renderNearbyLinks(marcaVeicolo);
+
+  } catch (err) {
+    let msg = err.message;
+    if (err.code === 1) msg = 'Accesso GPS negato — abilitalo nelle impostazioni del browser';
+    if (err.code === 2) msg = 'Posizione non disponibile';
+    if (err.code === 3) msg = 'Timeout GPS — riprova';
+    infoText.textContent = `⚠️ ${msg}`;
+    listEl.innerHTML = `
+      <div class="nearby-empty">
+        <div class="ico">⚠️</div>
+        <p>Errore GPS</p>
+        <small>${msg}</small>
+      </div>`;
+    toast(msg, 'error');
+  } finally {
+    startBtn.disabled    = false;
+    startBtn.textContent = '📍 Trova vicino a me';
+  }
+}
+
+function renderNearbyLinks(marcaVeicolo) {
+  if (state.userLat === null) return;
+
+  const marca = marcaVeicolo ||
+                (state.analysisResult?.marca_veicolo || '') ||
+                document.getElementById('f-marca-veicolo')?.value || '';
+
+  const lat = state.userLat;
+  const lng = state.userLng;
+
+  // Costruisce URL Google Maps search centrati sulla posizione
+  const queries = {
+    gommisti: {
+      label: '🔧 Gommisti / Pneumatici',
+      tipo: 'gommista',
+      q: 'gommista pneumatici vicino a me',
+    },
+    autofficine: {
+      label: '🛠️ Autofficine',
+      tipo: 'autofficina',
+      q: 'autofficina meccanico vicino a me',
+    },
+    concessionarie: {
+      label: marca ? `🏢 Concessionarie ${marca}` : '🏢 Concessionarie Auto',
+      tipo: 'concessionaria',
+      q: marca ? `concessionaria ${marca} vicino a me` : 'concessionaria auto vicino a me',
+    },
+  };
+
+  const listEl = document.getElementById('nearby-list');
+  const cards = [];
+
+  for (const [key, cfg] of Object.entries(queries)) {
+    if (!state.nearbyFilters[key]) continue;
+
+    // URL Google Maps: search centrato sulle coordinate + query
+    const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(cfg.q)}/@${lat},${lng},14z`;
+    // URL alternativo per dispositivi mobili (apre app Maps)
+    const mapsAppUrl = `https://maps.google.com/?q=${encodeURIComponent(cfg.q)}&near=${lat},${lng}`;
+
+    cards.push(`
+      <div class="nearby-place">
+        <div class="nearby-place-header">
+          <div class="nearby-place-name">${cfg.label}</div>
+          <div class="nearby-place-type">${cfg.tipo}</div>
+        </div>
+        <div class="nearby-place-info">
+          <div class="nearby-place-addr" style="font-size:11px;color:var(--text3)">
+            Apre Google Maps con la tua posizione attuale — risultati reali con telefoni, orari e recensioni
+          </div>
+        </div>
+        <div class="nearby-actions">
+          <a class="nearby-btn map" href="${mapsUrl}" target="_blank" rel="noopener" style="flex:1;font-size:11px">
+            🗺️ Cerca su Google Maps
+          </a>
+        </div>
+      </div>`);
+  }
+
+  if (!cards.length) {
+    listEl.innerHTML = `
+      <div class="nearby-empty">
+        <div class="ico">🔍</div>
+        <p>Nessun filtro attivo</p>
+        <small>Attiva almeno una categoria</small>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = cards.join('') + `
+    <div style="padding:12px 0 4px;font-family:var(--font-mono);font-size:9px;color:var(--text3);text-align:center;line-height:1.8">
+      Google Maps mostra telefono, orari e navigazione per ogni risultato.<br>
+      ${marca ? `Ricerca filtrata per marca: <strong style="color:var(--accent)">${marca}</strong>` : 'Aggiungi la marca veicolo in Scansione per filtrare le concessionarie.'}
+    </div>`;
+}
+
+// ── GENERA PDF ─────────────────────────────────
+async function generatePDF() {
+  if (!state.analysisResult) {
+    toast('Nessun risultato da esportare', 'warn');
+    return;
+  }
+  if (!state.hasDrawn && !state.skipSignature) {
+    toast('⚠️ Firma il documento o premi "Procedi senza firma"', 'warn');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const W = 210; const M = 14;
+  let y = 14;
+
+  const r = state.analysisResult;
+
+  // header
+  doc.setFillColor(13, 13, 13);
+  doc.rect(0, 0, W, 28, 'F');
+  doc.setTextColor(232, 255, 71);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('TireCheck Fleet', M, 11);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(136, 136, 136);
+  doc.text('by PezzaliApp', M, 16);
+
+  const officina = ls(KEYS.officina) || 'Officina';
+  const tel      = ls(KEYS.tel) || '';
+  const addr     = ls(KEYS.addr) || '';
+  doc.setTextColor(240, 240, 240);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(officina, W - M, 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(136, 136, 136);
+  if (tel)  doc.text(tel,  W - M, 15, { align: 'right' });
+  if (addr) doc.text(addr, W - M, 20, { align: 'right' });
+  y = 36;
+
+  // titolo report
+  doc.setTextColor(240, 240, 240);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('Scheda Controllo Pneumatico Flotta', M, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(136, 136, 136);
+  doc.text(new Date(r.timestamp).toLocaleString('it-IT'), M, y);
+  y += 8;
+
+  // veicolo
+  doc.setFillColor(26, 26, 26);
+  doc.roundedRect(M, y, W - M * 2, 20, 3, 3, 'F');
+  doc.setTextColor(232, 255, 71);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('MEZZO / POSIZIONE', M + 4, y + 5);
+  doc.setTextColor(240, 240, 240);
+  doc.setFontSize(10);
+  doc.text(r.targa || 'N/D', M + 4, y + 11);
+  doc.setFontSize(8);
+  doc.setTextColor(136, 136, 136);
+  const veicInfo = [r.tipo_mezzo, r.posizione, r.lato, r.tipo_asse, r.montaggio, r.marca_veicolo, r.cliente].filter(Boolean).join(' · ');
+  doc.text(veicInfo, M + 4, y + 17);
+  y += 26;
+
+  // pneumatico
+  doc.setFillColor(26, 26, 26);
+  doc.roundedRect(M, y, W - M * 2, 22, 3, 3, 'F');
+  doc.setTextColor(232, 255, 71);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('PNEUMATICO / SERVIZIO', M + 4, y + 5);
+  doc.setTextColor(240, 240, 240);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  const tireRow = [r.marca_gomma, r.misura, r.pressione_bar ? ('Press. ' + r.pressione_bar + ' bar') : ''].filter(Boolean).join(' — ') || 'N/D';
+  doc.text(tireRow, M + 4, y + 11);
+  doc.setFontSize(8);
+  doc.setTextColor(136, 136, 136);
+  const dotRow = [r.dot ? `DOT: ${r.dot}` : '', r.anno_produzione ? `Anno prod.: ${r.anno_produzione}` : '', r.km_mezzo ? `Km mezzo: ${r.km_mezzo}` : ''].filter(Boolean).join('  ·  ');
+  if (dotRow) doc.text(dotRow, M + 4, y + 18);
+  y += 28;
+
+  // esito
+  const esitoColor = r.esito === 'OK' ? [46,213,115] : r.esito === 'ATTENZIONE' ? [255,165,2] : [255,71,87];
+  doc.setFillColor(...esitoColor, 30);
+  doc.roundedRect(M, y, W - M * 2, 14, 3, 3, 'F');
+  doc.setTextColor(...esitoColor);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text(`ESITO: ${r.esito}`, M + 4, y + 9);
+  y += 20;
+
+  // metriche
+  const cols = [
+    ['Profondità', `${r.profondita_mm ?? '?'} mm`],
+    ['Usura unif.', r.usura_uniforme ? 'Sì' : 'No'],
+    ['Fianco',     r.condizione_fianco || '—'],
+    ['Priorità',    r.urgenza || '—'],
+  ];
+  const cw = (W - M * 2 - 9) / 4;
+  cols.forEach(([label, val], i) => {
+    const x = M + i * (cw + 3);
+    doc.setFillColor(26, 26, 26);
+    doc.roundedRect(x, y, cw, 18, 2, 2, 'F');
+    doc.setTextColor(136, 136, 136);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.text(label.toUpperCase(), x + 3, y + 5);
+    doc.setTextColor(240, 240, 240);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(val, x + 3, y + 13);
+  });
+  y += 24;
+
+  // commento
+  doc.setFillColor(20, 20, 20);
+  doc.roundedRect(M, y, 3, 22, 1.5, 1.5, 'F');
+  doc.setFillColor(232, 255, 71, 60);
+  doc.roundedRect(M, y, 3, 22, 1.5, 1.5, 'F');
+  doc.setTextColor(136, 136, 136);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const commentLines = doc.splitTextToSize(r.commento || '', W - M * 2 - 8);
+  doc.text(commentLines, M + 6, y + 5);
+  y += commentLines.length * 4 + 10;
+
+  // immagine
+  if (state.currentImage) {
+    try {
+      const imgH = 45;
+      doc.setFillColor(26, 26, 26);
+      doc.roundedRect(M, y, W - M * 2, imgH + 6, 3, 3, 'F');
+      doc.addImage(state.currentImage, 'JPEG', M + 3, y + 3, (imgH * 4) / 3, imgH);
+    } catch(e) {}
+    y += 56;
+  }
+
+  // firma
+  const signY = Math.max(y, 220);
+  doc.setDrawColor(50, 50, 50);
+  doc.setLineWidth(0.3);
+  doc.line(M, signY + 20, W / 2 - 10, signY + 20);
+  doc.setTextColor(136, 136, 136);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text('FIRMA CLIENTE', M, signY + 25);
+
+  if (state.hasDrawn && state.signatureData) {
+    try { doc.addImage(state.signatureData, 'PNG', M, signY, 70, 18); } catch(e) {}
+  }
+
+  // footer
+  doc.setFillColor(13, 13, 13);
+  doc.rect(0, 285, W, 12, 'F');
+  doc.setTextColor(80, 80, 80);
+  doc.setFontSize(7);
+  doc.text('Generato da TireCheck Fleet · PezzaliApp', W / 2, 291, { align: 'center' });
+
+  const filename = `TireCheckFleet_${r.targa || 'report'}_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(filename);
+  toast('📄 PDF scaricato!', 'success');
+}
+
+// ── WEBHOOK MAKE.COM ───────────────────────────
+async function sendWebhook() {
+  const url = ls(KEYS.webhook);
+  if (!url) { toast('⚠️ Configura il webhook Make.com nelle impostazioni', 'warn'); return; }
+  if (!state.analysisResult) { toast('Nessuna analisi da inviare', 'warn'); return; }
+
+  const r = state.analysisResult;
+  const payload = {
+    source: 'TireCheck Fleet',
+    timestamp: new Date().toISOString(),
+    officina:         ls(KEYS.officina) || '',
+    targa:            r.targa,
+    tipo_mezzo:       r.tipo_mezzo,
+    asse:             r.posizione,
+    lato:             r.lato,
+    tipo_asse:        r.tipo_asse,
+    montaggio:        r.montaggio,
+    cliente:          r.cliente,
+    km_mezzo:         r.km_mezzo,
+    marca_veicolo:    r.marca_veicolo,
+    marca_gomma:      r.marca_gomma,
+    pressione_bar:    r.pressione_bar,
+    note_operatore:   r.note_operatore,
+    misura:           r.misura,
+    dot:              r.dot,
+    anno_produzione:  r.anno_produzione,
+    esito:            r.esito,
+    profondita_mm:    r.profondita_mm,
+    usura_uniforme:   r.usura_uniforme,
+    tipo_usura:       r.tipo_usura,
+    condizione_fianco: r.condizione_fianco,
+    urgenza:          r.urgenza,
+    commento:         r.commento,
+    firma_cliente:    state.hasDrawn ? 'presente' : 'assente',
+  };
+
+  try {
+    toast('📡 Invio in corso…', 'warn');
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) toast('✅ Dati inviati a Make.com!', 'success');
+    else throw new Error(`HTTP ${res.status}`);
+  } catch (e) {
+    toast(`Errore webhook: ${e.message}`, 'error');
+  }
+}
+
+// ── STORICO ────────────────────────────────────
+function saveToHistory(r) {
+  const history = getHistory();
+  history.unshift({ ...r, id: Date.now() });
+  if (history.length > 50) history.pop();
+  localStorage.setItem(KEYS.history, JSON.stringify(history));
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(KEYS.history) || '[]'); }
+  catch { return []; }
+}
+
+function loadHistory() {
+  const history = getHistory();
+  const list  = document.getElementById('history-list');
+  const count = document.getElementById('history-count');
+  count.textContent = `${history.length} analisi`;
+
+  if (!history.length) {
+    list.innerHTML = `
+      <div class="history-empty">
+        <div class="ico">📋</div>
+        <p>Nessuna analisi salvata</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = history.map(r => {
+    const esitoMap = { OK: '✅', ATTENZIONE: '⚠️', SOSTITUIRE: '🔴' };
+    const dt = new Date(r.timestamp).toLocaleDateString('it-IT') + ' ' +
+               new Date(r.timestamp).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="history-item" onclick="openDetail(${r.id})">
+        ${r.image ? `<img class="history-thumb" src="${r.image}" alt="gomma">` : '<div class="history-thumb"></div>'}
+        <div class="history-info">
+          <div class="history-plate">${r.targa || 'N/D'} · ${[r.posizione, r.lato].filter(Boolean).join(' / ')}</div>
+          <div class="history-meta">${esitoMap[r.esito] || ''} ${r.esito} · ${dt}</div>
+          ${r.misura ? `<div class="history-meta" style="color:var(--text3)">${r.misura}${r.dot ? ' · DOT: ' + r.dot : ''}</div>` : ''}
+          ${[r.tipo_mezzo, r.tipo_asse, r.cliente].filter(Boolean).length ? `<div class="history-meta" style="color:var(--text3)">${[r.tipo_mezzo, r.tipo_asse, r.cliente].filter(Boolean).join(' · ')}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openDetail(id) {
+  const r = getHistory().find(h => h.id === id);
+  if (!r) return;
+
+  const esitoColor = r.esito === 'OK' ? 'var(--ok)' : r.esito === 'ATTENZIONE' ? 'var(--warn)' : 'var(--danger)';
+  const dt = new Date(r.timestamp).toLocaleString('it-IT');
+
+  document.getElementById('detail-content').innerHTML = `
+    ${r.image ? `<img src="${r.image}" style="width:100%;border-radius:var(--r);object-fit:cover;aspect-ratio:16/9">` : ''}
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <div>
+        <div style="font-size:18px;font-weight:800">${r.targa || 'N/D'}</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text2)">${r.posizione}${r.marca_veicolo ? ' · ' + r.marca_veicolo : ''}${r.marca_gomma ? ' · ' + r.marca_gomma : ''} ${r.misura || ''}</div>
+        ${r.dot ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">DOT: ${r.dot}${r.anno_produzione ? ' · ' + r.anno_produzione : ''}</div>` : ''}
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">${dt}</div>
+      </div>
+      <div style="font-size:24px;font-weight:900;color:${esitoColor}">${r.esito}</div>
+    </div>
+    <div style="margin-top:12px;background:var(--bg);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13px;color:var(--text2);line-height:1.6">
+      ${r.commento || ''}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px">
+        <div style="font-family:var(--font-mono);font-size:8px;color:var(--text2);text-transform:uppercase">Profondità</div>
+        <div style="font-weight:700;margin-top:2px">${r.profondita_mm ?? '?'} mm</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px">
+        <div style="font-family:var(--font-mono);font-size:8px;color:var(--text2);text-transform:uppercase">Priorità</div>
+        <div style="font-weight:700;margin-top:2px">${r.urgenza || '—'}</div>
+      </div>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="deleteFromHistory(${r.id})" style="margin-top:12px;width:100%">🗑️ Elimina questa voce</button>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function deleteFromHistory(id) {
+  const history = getHistory().filter(h => h.id !== id);
+  localStorage.setItem(KEYS.history, JSON.stringify(history));
+  document.getElementById('detail-modal').classList.remove('open');
+  loadHistory();
+  toast('Voce eliminata', 'success');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('detail-modal')) {
+    document.getElementById('detail-modal').classList.remove('open');
+  }
+}
+
+// ── IMPOSTAZIONI ───────────────────────────────
+function loadSettings() {
+  document.getElementById('s-gemini-key').value = ls(KEYS.gemini) || '';
+  document.getElementById('s-webhook').value    = ls(KEYS.webhook) || '';
+  document.getElementById('s-officina').value   = ls(KEYS.officina) || '';
+  document.getElementById('s-tel').value        = ls(KEYS.tel) || '';
+  document.getElementById('s-addr').value       = ls(KEYS.addr) || '';
+  document.getElementById('s-piva').value       = ls(KEYS.piva) || '';
+}
+
+function saveSettings() {
+  const key = document.getElementById('s-gemini-key').value.trim();
+  if (key) localStorage.setItem(KEYS.gemini, key);
+  const wh = document.getElementById('s-webhook').value.trim();
+  if (wh) localStorage.setItem(KEYS.webhook, wh);
+  localStorage.setItem(KEYS.officina, document.getElementById('s-officina').value.trim());
+  localStorage.setItem(KEYS.tel,      document.getElementById('s-tel').value.trim());
+  localStorage.setItem(KEYS.addr,     document.getElementById('s-addr').value.trim());
+  localStorage.setItem(KEYS.piva,     document.getElementById('s-piva').value.trim());
+  toast('✅ Impostazioni salvate', 'success');
+  loadHome();
+}
+
+function clearHistory() {
+  if (!confirm('Eliminare tutto lo storico analisi?')) return;
+  localStorage.removeItem(KEYS.history);
+  loadHistory();
+  toast('Storico eliminato', 'success');
+}
+
+// ── NUOVA SCANSIONE ────────────────────────────
+function newScan() {
+  state.currentImage = null;
+  state.currentImageFile = null;
+  state.fiancoImage = null;
+  state.fiancoImageFile = null;
+  state.analysisResult = null;
+  state.signatureData = null;
+  state.hasDrawn = false;
+  state.skipSignature = false;
+  state.ocrAnno = null;
+
+  // reset slot battistrada
+  const imgB = document.getElementById('preview-battistrada');
+  imgB.classList.remove('loaded'); imgB.src = '';
+  document.getElementById('ph-battistrada').style.display = 'flex';
+  const badgeB = document.getElementById('badge-battistrada');
+  badgeB.textContent = '1 · Tread'; badgeB.className = 'slot-badge';
+
+  // reset slot fianco
+  const imgF = document.getElementById('preview-fianco');
+  imgF.classList.remove('loaded'); imgF.src = '';
+  document.getElementById('ph-fianco').style.display = 'flex';
+  const badgeF = document.getElementById('badge-fianco');
+  badgeF.textContent = '2 · Sidewall'; badgeF.className = 'slot-badge';
+  document.getElementById('btn-slot-fianco').classList.remove('has-photo');
+
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('f-targa').value = '';
+  document.getElementById('f-cliente').value = '';
+  document.getElementById('f-misura').value = '';
+  document.getElementById('f-dot').value = '';
+  document.getElementById('f-marca').value = '';
+  document.getElementById('f-tipo-mezzo').value = 'Camion';
+  document.getElementById('f-lato').value = 'SX esterna';
+  document.getElementById('f-tipo-asse').value = 'Sterzante';
+  document.getElementById('f-montaggio').value = 'Singolo';
+  document.getElementById('f-marca-veicolo').value = '';
+  document.getElementById('f-km').value = '';
+  document.getElementById('f-pressione').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('ocr-banner').classList.remove('visible');
+
+  goScreen('scan');
+  updateNav('scan');
+}
+
+// ── ONBOARDING ─────────────────────────────────
+function closeOnboarding() {
+  document.getElementById('onboarding-modal').classList.remove('open');
+  goScreen('settings');
+  loadSettings();
+}
+
+// ── TOAST ──────────────────────────────────────
+let toastTimer;
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (type ? ` ${type}` : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ── UTILITY ────────────────────────────────────
+function ls(key) { return localStorage.getItem(key); }
+</script>
+</body>
+</html>
